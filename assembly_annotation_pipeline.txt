@@ -282,7 +282,7 @@ busco -m genome \
 # Completeness histogram
 python generate_BUSCO_histoplot.py -wd /dir/with/BUSCO/short/summary/files
 
-# Synteny plot in R wiuth 'plot_BUSCO_synteny.R'
+# Synteny plot in R with 'plot_BUSCO_synteny.R'
 
 
 
