@@ -1,0 +1,313 @@
+
+##################################################
+##################################################
+####                                          ####
+####      ASSEMBLY AND ANNOTATION OF THE      ####
+####          GENOME OF DIPRION PINI          ####
+####                                          ####
+##################################################
+##################################################
+
+
+
+# # # # # # # #   ASSEMBLY   # # # # # # # #
+
+
+### Hifiasm assembly
+
+hifiasm -o Dpini_HiFi -t 32 --ul /path/to/MinION/reads/minion_reads_min1000.fastq.gz /path/to/PacBio/reads/hifi_reads.fastq.gz
+
+
+### purge_dups
+
+run_purge_dups.py config.dpini_purge_dups.json bin_dir Dpini
+
+
+### RagTag correct (D. similis genome accession GCF_021155765.1)
+
+python ragtag.py correct -t 4 \
+	-f 10000 \
+	--remove-small \
+	-o Dpini_primary_purged_correct \
+	/path/to/GCF_021155765.1_iyDipSimi1.1_genomic.fna \
+	/path/to/Dpini_primary_purged.fasta
+
+
+### Scaffolding I
+
+scaff10x -nodes 32 \
+	-longread 1 \
+	-file 0 \
+	-size 0.3 \
+	-data input_scaff10X.dat \
+	/path/to/input/assembly/Dpini_primary_purged.fasta 
+	/output/Dpini_primary_purged_correct_scaffI.fasta
+
+
+### Scaffolding II
+
+LINKS -j 4 \
+	-f /path/to/Dpini_primary_purged_correct_scaffI.fasta \
+	-s links_input2.txt \
+	-b Dpini_primary_purged_correct_scaffII
+
+
+### Scaffolding III
+
+python ragtag.py scaffold -t 4 \
+	-o Dpini_primary_purged_correct_scaffIII \
+	/path/to/GCF_021155765.1_iyDipSimi1.1_genomic.fna \
+	/path/to/Dpini_primary_purged_correct_scaffII.fasta
+
+
+### Genome survey
+
+# Count k-mers (k=21)
+jellyfish count -C -m 21 -s 1G -t 8 -o linked_reads.jf <(zcat /path/to/linked_reads.fastq.gz)
+
+# Get k-mer count histogram
+jellyfish histo -t 8 linked_reads.jf > linked_reads_jf_out.histo
+
+# Run GenomeScope
+# Upload histo file to GenomeScope web server http://genomescope.org/genomescope2.0/http://genomescope.org/genomescope2.0/
+# Set ploidy = 1 and Max k-mer coverage = -1
+
+# # # # # # # #   QUALITY ASSESSMENT   # # # # # # # #
+
+
+### QV and kmer completeness
+
+# Run meryl
+meryl count /path/to/PacBio/reads/hifi_reads.fastq.gz k=19 output Dpini_k19.meryl
+
+# Run Merqury
+$MERQURY/merqury.sh ./Dpini_k19.meryl/ /path/to/assembly/input.fasta merqury_out_k19
+
+
+### BUSCO completeness
+
+busco -m genome \
+	-i /path/to/assembly/input.fasta \
+	-l hymenoptera_odb10 \
+	--augustus \
+	--cpu 32 \
+	-o BUSCO_out_dir
+
+
+### Blobtools
+
+# Create BlobDir dataset
+blobtools create
+	--fasta /path/to/assembly/input.fasta \
+	Dpini_blobtools_out
+
+# Adding BLAST hits (taxonomic annotation for each sequence)
+pb blastn -db nt \
+	-query /path/to/assembly/input.fasta \
+	-outfmt "6 qseqid staxids bitscore std" \
+	-max_target_seqs 10 \
+	-max_hsps 1 \
+	-evalue 1e-25 \
+	-num_threads $SLURM_CPUS_PER_TASK \
+	-out BLAST.out
+
+# download UniProtKB filtered for Hymenoptera https://www.uniprot.org/uniprotkb?query=%28taxonomy_id%3A7399%29 (accessed 15.3.2024)
+# create Diamond DB 
+diamond makedb --in UniProt_hymenoptera.faa -d UniProtHymDB
+diamond blastx \
+	--query /path/to/assembly/input.fasta \
+	--db ../UniProtHymDB.dmnd \
+	--outfmt 6 qseqid staxids bitscore qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore \
+	--sensitive \
+	--max-target-seqs 1 \
+	--evalue 1e-25 \
+	--threads 32 \
+	> Diamond.out
+	
+# download and unpack taxonomy NCBI taxonomy files from https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/
+blobtools add \
+	--hits BLAST.out \
+	--hits Diamond.out \
+	--taxrule bestsumorder \
+	--taxdump /path/to/taxdump_files/new_taxdump \
+	Dpini_blobtools_out
+
+# Adding coverage information (mapping reads to assembly)
+minimap2 -ax map-hifi \
+	-t 24 \
+	/path/to/assembly/input.fasta \
+	/path/to/PacBio/reads/hifi_reads.fastq.gz \
+	| samtools view --threads 24 -bS | samtools sort --threads 24 -o Map_HiFi_to_Dpini.bam
+blobtools add \
+	--cov Map_HiFi_to_Dpini.bam \
+	Dpini_blobtools_out
+	
+# Adding BUSCO data 
+blobtools add \
+	--busco /path/to/busco/output/BUSCO_full_table.tsv \
+	Dpini_blobtools_out
+
+# Blobtool plots
+blobtools view --plot --out Blobtool_figures/ --view blob Dpini_blobtools_out
+blobtools view --plot --out Blobtool_figures/ --view snail Dpini_blobtools_out
+blobtools view --plot --out Blobtool_figures/ --view cumulative Dpini_blobtools_out
+
+
+
+# # # # # # # #   ANNOTATION   # # # # # # # #
+
+
+### TE identification (D. similis cds accession GCF_021155765.1)
+
+EDTA.pl --genome /path/to/assembly/input.fasta \
+	--cds /path/to/GCF_021155765.1_iyDipSimi1.1_cds_from_genomic.fna \
+	--overwrite 1 \
+	--sensitive 1 \
+	--anno 1 \
+	--threads 32 \
+	--force 1
+
+
+### Repeat masking
+
+RepeatMasker -lib /path/to/edta_output.mod.EDTA.TElib.fa \
+	-pa $SLURM_CPUS_PER_TASK \
+	-a \
+	-s \
+	-no_is \
+	-inv \
+	-dir ./RepMask \
+	-norna \
+	-xsmall \
+	-nolow \
+	/path/to/assembly/input.fasta
+
+
+### Plot repeat landscape
+
+# get the divsum file (from RepeatMasker output genome.align)
+calcDivergenceFromAlign.pl -s genome.divsum /path/to/genome.align
+
+# extract Kimura distance table from divsum file (last 72 lines)
+tail -n 72 /path/to/genome.divsum > genome.kimuradist
+
+# plot in R with 'plot_repeat_landscape.R'
+
+
+### Identifying telomeric repeats
+
+# Search scaffolds for the motif AACCT
+tidk search -s AACCT -o dpini -d ./dpini_tidk /path/to/assembly/input.fasta
+
+# plot the output in svg format
+tidk plot -t ./dpini_tidk/*.tsv -o Dpini_tidk_plot
+
+
+
+### Protein annotation
+
+# BRAKER2 with protein data from Arthropoda OrthoDB11
+braker.pl --species=Diprion_pini \
+	--genome=/path/to/RepeatMasker/output/input_assembly.fasta.masked \
+	--threads=$SLURM_CPUS_PER_TASK \
+	--prot_seq=/path/to/Arthropoda_OrthoDB11.fa \
+	--softmasking \
+	--useexisting
+		
+# BRAKER2 with RNA-seq data (D. pini transcriptome) from Peters et al. 2017
+
+# calculate indexes. Only needs to be done once.
+STAR --runMode genomeGenerate \
+	--runThreadN 24 \
+	--genomeDir ../ \
+	--genomeFastaFiles ../Dpini_HiFi_PB_ONT_primary_purged_scaffII.fasta.masked \
+	--genomeSAindexNbases 12
+	
+# Run the mapping (NOTE: reads cannot be gzipped)
+STAR --genomeDir ../ \
+	--readFilesIn /path/to/SRR1503030_1.fastq /path/to/SRR1503030_2.fastq \
+	--runThreadN 24 \
+	--outFileNamePrefix SRR1503030_RNA_mapped_ \
+	--outSAMtype BAM SortedByCoordinate
+	
+braker.pl --species=Diprion_pini \
+	--genome=/path/to/RepeatMasker/output/input_assembly.fasta.masked \
+	--threads=$SLURM_CPUS_PER_TASK \
+	--bam=/path/to/RNA/mapped/to/genome/SRR1503030_RNA_mapped.bam \
+	--softmasking \
+	--useexisting
+
+# Combining both BRAKER runs with TSEBRA
+tsebra.py 	-c tsebra.cfg \
+	-g ../OrthoDB/braker/Augustus/augustus.hints.gtf,../RNA/braker/Augustus/augustus.hints.gtf \
+	-e ../OrthoDB/braker/hintsfile.gff,../RNA/braker/hintsfile.gff \
+	-o braker_prot+rna_out_tsebra.gtf
+gffread -w braker_prot+rna_out_tsebra.fa -g /path/to/input_assembly.fasta.masked braker_prot+rna_out_tsebra.gtf
+gffread -y braker_prot+rna_out_tsebra.faa -g /path/to/input_assembly.fasta.masked braker_prot+rna_out_tsebra.gtf
+
+
+### Functional annotation 
+
+# OrthoFinder 
+# Accession numbers of other hymenopteran genomes in analysis: D. similis (GCF_021155765.1), Neodiprion fabricii (GCF_021155785.1), N. lecontei (GCF_021901455.1), N. pinetum (GCF_021155775.1), N. virginiana (GCF_021901495.1), Orussus abietus (GCF_000612105.2), Athalia rosae (GCF_917208135.1), Atta cephalotes (GCF_000143395.1), Apis mellifera (GCF_003254395.2), Polistes dominula (GCF_001465965.1)
+
+python orthofinder.py -f /folder/with/protein/fastas/ -t $SLURM_CPUS_PER_TASK -a 8
+
+# UpSet plot in R with 'UpSet_plot.R'
+
+# get unique set of proteins for D.pini from OrthoFinder output
+awk ' $3 == 0 && $4 == 0 && $5 == 0 && $6 == 0 && $7 == 0 && $8 == 0 && $9 == 0 && $10 == 0 && $11 == 0 && $12 == 0 { print $0} ' /path/to/OrthoFinder/output/Orthogroups.GeneCount.tsv | cut -f 1 > Dpini_orthogroup.list
+while read p; do grep $p /path/to/OrthoFinder/output/Orthogroups.tsv; done < Dpini_orthogroup.list | cut -f 2 | tr -d ' ' | tr ',' '\n' > Dpini_unique.list
+while read p; do grep -A 1 $p braker_prot+rna_out_tsebra.faa; done < Dpini_unique.list > Dpini_unique.faa
+
+# PANNZER2 run via the Pannzer2 web server with both all and unique D. pini proteins (http://ekhidna2.biocenter.helsinki.fi/sanspanz/)
+
+# Wordcloud plot of GO terms for all and unique proteins (PANNZER output GO.txt) in R with 'plot_GO_wordcloud.R'
+
+
+
+# # # # # # # #   COMPARATIVE GENOMICS   # # # # # # # #
+
+
+### BUSCO plots
+
+# Run BUSCO on other genomes
+busco -m genome \
+	-i /path/to/assembly/input.fasta \
+	-l hymenoptera_odb10 \
+	--augustus \
+	--cpu 32 \
+	-o BUSCO_out_dir
+
+# Completeness histogram
+python generate_BUSCO_histoplot.py -wd /dir/with/BUSCO/short/summary/files
+
+# Synteny plot in R wiuth 'plot_BUSCO_synteny.R'
+
+
+
+### Genome alignment
+
+# D. pini vs. D. similis (D. similis genome accession GCF_021155765.1)
+nucmer -t 32 -p Dpini_Dsimilis_nucmer_out /path/to/assembly/input.fasta /path/to/GCF_021155765.1_iyDipSimi1.1_genomic.fna
+show-coords -c Dpini_Dsimilis_nucmer_out.delta > Dpini_Dsimilis_nucmer_out.coords
+
+/path/to/dotPlotly/mummerCoordsDotPlotly.R -i Dpini_Dsimilis_nucmer_out.coords \
+        -o Dpini_Dsimilis_dotplot_out \
+        -s \
+        -t \
+        -m 7500 \
+        -q 100000 \
+        -l
+        
+# D. pini vs. N. lecontei (N. lecontei genome accession GCF_021901455.1)
+nucmer -t 24 -p Dsimilis_Nlecontei_nucmer_out /path/to/assembly/input.fasta /path/to/GCF_021901455.1_iyNeoLeco1.1_genomic.fna
+show-coords -c Dsimilis_Nlecontei_nucmer_out.delta > Dsimilis_Nlecontei_nucmer_out.coords
+
+/projappl/project_2002171/dotPlotly/mummerCoordsDotPlotly.R -i Dsimilis_Nlecontei_nucmer_out.coords \
+        -o Dsimilis_Nlecontei_dotplot \
+        -s \
+        -t \
+        -m 7500 \
+        -q 100000 \
+        -l
