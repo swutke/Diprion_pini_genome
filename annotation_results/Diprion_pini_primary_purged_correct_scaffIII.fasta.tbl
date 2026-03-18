@@ -1,0 +1,58 @@
+==================================================
+file name: Dpini_HiFi_PB_ONT_primary_purged_correct_scaffIII.fasta
+sequences:            81
+total length:  268448331 bp  (268432547 bp excl N/X-runs)
+GC level:         39.57 %
+bases masked:   73933143 bp ( 27.54 %)
+==================================================
+               number of      length   percentage
+               elements*    occupied  of sequence
+--------------------------------------------------
+Retroelements         3761      3087750 bp    1.15 %
+   SINEs:                0            0 bp    0.00 %
+   Penelope:             0            0 bp    0.00 %
+   LINEs:             1317      1144539 bp    0.43 %
+    CRE/SLACS            0            0 bp    0.00 %
+     L2/CR1/Rex        466       374197 bp    0.14 %
+     R1/LOA/Jockey     449       466714 bp    0.17 %
+     R2/R4/NeSL          0            0 bp    0.00 %
+     RTE/Bov-B           0            0 bp    0.00 %
+     L1/CIN4             0            0 bp    0.00 %
+   LTR elements:      2444      1943211 bp    0.72 %
+     BEL/Pao            53       109489 bp    0.04 %
+     Ty1/Copia         639       224837 bp    0.08 %
+     Gypsy/DIRS1      1745      1608266 bp    0.60 %
+       Retroviral        0            0 bp    0.00 %
+
+DNA transposons       7068      3323797 bp    1.24 %
+   hobo-Activator      817       154234 bp    0.06 %
+   Tc1-IS630-Pogo      320       211157 bp    0.08 %
+   En-Spm                0            0 bp    0.00 %
+   MULE-MuDR           279        95547 bp    0.04 %
+   PiggyBac              0            0 bp    0.00 %
+   Tourist/Harbinger     4          419 bp    0.00 %
+   Other (Mirage,        0            0 bp    0.00 %
+    P-element, Transib)
+
+Rolling-circles        364       180362 bp    0.07 %
+
+Unclassified:       181546     60638083 bp   22.59 %
+
+Total interspersed repeats:    67049630 bp   24.98 %
+
+
+Small RNA:               0            0 bp    0.00 %
+
+Satellites:              0            0 bp    0.00 %
+Simple repeats:     144695      5624716 bp    2.10 %
+Low complexity:      21791      1078435 bp    0.40 %
+==================================================
+
+* most repeats fragmented by insertions or deletions
+  have been counted as one element
+                                                      
+
+RepeatMasker version 4.1.9 , sensitive mode                                       
+run with rmblastn version 2.11.0+
+The query was compared to classified sequences in "Dpini_HiFi_PB_ONT_primary_purged_correct_scaffIII.fasta.mod.EDTA.TElib.fa"
+FamDB: 
