@@ -1,0 +1,17 @@
+Chr	Start	End	fill	species	size	color
+scaffold_pc_01	1	18318064	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_02	1	23018504	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_03	1	17723983	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_04	1	24271190	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_05	1	10387231	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_06	1	25905474	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_07	1	11017309	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_08	1	28759458	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_09	1	11410751	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_10	1	23282177	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_11	1	14464945	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_12	1	18718251	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_13	1	12571926	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold_pc_14	1	13128514	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold27	1	3598704	95FF7D	DpiniHiFi_ragtag	17	6c72f0
+scaffold29	1	2138711	95FF7D	DpiniHiFi_ragtag	17	6c72f0
