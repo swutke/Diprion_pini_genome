@@ -1,0 +1,2 @@
+/path/to/PacBio/reads/hifi_reads.fastq.gz
+/path/to/MinION/reads/minion_reads_min1000.fastq.gz
