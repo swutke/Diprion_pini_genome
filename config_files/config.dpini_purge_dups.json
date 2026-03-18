@@ -1,0 +1,45 @@
+{
+  "cc": {
+    "fofn": "refdir/pb.fofn",
+    "isdip": 1,
+    "core": 12,
+    "mem": 20000,
+    "queue": "normal",
+    "mnmp_opt": "",
+    "bwa_opt": "",
+    "ispb": 1,
+    "skip": 0
+  },
+  "sa": {
+    "core": 12,
+    "mem": 10000,
+    "queue": "normal"
+  },
+  "busco": {
+    "core": 12,
+    "mem": 20000,
+    "queue": "long",
+    "skip": 0,
+    "lineage": "",
+    "prefix": "Dpini_HiFi_PB_ONT_primary_purged",
+    "tmpdir": "busco_tmp"
+  },
+  "pd": {
+    "mem": 20000,
+    "queue": "normal"
+  },
+  "gs": {
+    "mem": 10000,
+    "oe": 1
+  },
+  "kcp": {
+    "core": 12,
+    "mem": 30000,
+    "fofn": "refdir/10x.fofn",
+    "prefix": "Dpini_HiFi_PB_ONT_primary_purged_kcm",
+    "tmpdir": "kcp_tmp",
+    "skip": 0
+  },
+  "ref": "/scratch/project_2002171/Dpini_2/HiFi_assembly/Hifiasm_assembly/purgedups/refdir/Dpini_HiFi_PB_ONT_primary.fasta",
+  "out_dir": "Dpini_HiFi_PB_ONT_primary"
+}
