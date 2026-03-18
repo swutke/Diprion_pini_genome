@@ -179,7 +179,6 @@ RepeatMasker -lib /path/to/edta_output.mod.EDTA.TElib.fa \
 	-dir ./RepMask \
 	-norna \
 	-xsmall \
-	-nolow \
 	/path/to/assembly/input.fasta
 
 
